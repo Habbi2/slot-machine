@@ -33,9 +33,12 @@ export default function Home() {
     if (!result) return;
     
     // Create unique ID for this spin to prevent duplicate handling
-    const spinId = `${result.username}-${result.reels.map(r => r.emoji).join('')}-${Date.now()}`;
+    const spinId = `${result.username}-${result.reels.map(r => r.emoji).join('')}`;
     if (lastHandledSpinRef.current === spinId) return;
     lastHandledSpinRef.current = spinId;
+
+    // Mark spin as finished so we can spin again
+    slotMachine.finishSpin();
 
     // Record in leaderboard
     leaderboard.recordSpin(result.username, result.tokens, result.isJackpot);
@@ -47,7 +50,7 @@ export default function Home() {
       fireSmallWin();
     }
     // No confetti for losing - less visual noise
-  }, [slotMachine.currentSpin, leaderboard]);
+  }, [slotMachine, leaderboard]);
 
   // Handle commands from Twitch chat
   const handleCommand = useCallback(
