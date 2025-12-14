@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { SpinResult, Symbol } from '../hooks/useSlotMachine';
 
@@ -29,38 +29,46 @@ interface ReelProps {
 function Reel({ finalSymbol, isSpinning, delay, onStop, onPlayTick }: ReelProps) {
   const [displaySymbol, setDisplaySymbol] = useState('🎰');
   const [spinning, setSpinning] = useState(false);
+  const onStopRef = useRef(onStop);
+  const onPlayTickRef = useRef(onPlayTick);
+  
+  // Keep refs updated
+  useEffect(() => {
+    onStopRef.current = onStop;
+    onPlayTickRef.current = onPlayTick;
+  }, [onStop, onPlayTick]);
 
   useEffect(() => {
-    if (isSpinning) {
-      setSpinning(true);
+    if (!isSpinning) return;
+    
+    setSpinning(true);
+    
+    // Spin animation - rapid symbol changes
+    const spinDuration = 1500 + delay;
+    const intervalTime = 80;
+    let elapsed = 0;
+
+    const interval = setInterval(() => {
+      elapsed += intervalTime;
       
-      // Spin animation - rapid symbol changes
-      const spinDuration = 1500 + delay;
-      const intervalTime = 80;
-      let elapsed = 0;
+      // Random symbol during spin
+      const randomIndex = Math.floor(Math.random() * ALL_SYMBOLS.length);
+      setDisplaySymbol(ALL_SYMBOLS[randomIndex]);
 
-      const interval = setInterval(() => {
-        elapsed += intervalTime;
-        
-        // Random symbol during spin
-        const randomIndex = Math.floor(Math.random() * ALL_SYMBOLS.length);
-        setDisplaySymbol(ALL_SYMBOLS[randomIndex]);
-
-        // Stop when duration reached
-        if (elapsed >= spinDuration) {
-          clearInterval(interval);
-          if (finalSymbol) {
-            setDisplaySymbol(finalSymbol.emoji);
-          }
-          setSpinning(false);
-          onPlayTick();
-          onStop();
+      // Stop when duration reached
+      if (elapsed >= spinDuration) {
+        clearInterval(interval);
+        if (finalSymbol) {
+          setDisplaySymbol(finalSymbol.emoji);
         }
-      }, intervalTime);
+        setSpinning(false);
+        onPlayTickRef.current();
+        onStopRef.current();
+      }
+    }, intervalTime);
 
-      return () => clearInterval(interval);
-    }
-  }, [isSpinning, finalSymbol, delay, onStop, onPlayTick]);
+    return () => clearInterval(interval);
+  }, [isSpinning, finalSymbol, delay]);
 
   return (
     <div className="reel-container">
