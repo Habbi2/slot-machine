@@ -22,17 +22,18 @@ interface SlotMachineProps {
 
 interface ReelProps {
   finalSymbol: Symbol | null;
-  isSpinning: boolean;
+  spinId: number | null;
   delay: number;
   onStop: () => void;
   onPlayTick: () => void;
 }
 
-function Reel({ finalSymbol, isSpinning, delay, onStop, onPlayTick }: ReelProps) {
+function Reel({ finalSymbol, spinId, delay, onStop, onPlayTick }: ReelProps) {
   const [displaySymbol, setDisplaySymbol] = useState('🎰');
   const [spinning, setSpinning] = useState(false);
   const onStopRef = useRef(onStop);
   const onPlayTickRef = useRef(onPlayTick);
+  const lastSpinIdRef = useRef<number | null>(null);
   
   useEffect(() => {
     onStopRef.current = onStop;
@@ -40,7 +41,9 @@ function Reel({ finalSymbol, isSpinning, delay, onStop, onPlayTick }: ReelProps)
   }, [onStop, onPlayTick]);
 
   useEffect(() => {
-    if (!isSpinning) return;
+    // Only start spinning if we have a new spin ID
+    if (spinId === null || spinId === lastSpinIdRef.current) return;
+    lastSpinIdRef.current = spinId;
     
     setSpinning(true);
     
@@ -66,7 +69,7 @@ function Reel({ finalSymbol, isSpinning, delay, onStop, onPlayTick }: ReelProps)
     }, intervalTime);
 
     return () => clearInterval(interval);
-  }, [isSpinning, finalSymbol, delay]);
+  }, [spinId, finalSymbol, delay]);
 
   return (
     <div className="reel-container">
@@ -94,7 +97,7 @@ export function SlotMachine({
 }: SlotMachineProps) {
   const [reelsStopped, setReelsStopped] = useState([false, false, false]);
   const [showResult, setShowResult] = useState(false);
-  const hasCompletedRef = useRef(false);
+  const [currentSpinId, setCurrentSpinId] = useState<number | null>(null);
   const onSpinCompleteRef = useRef(onSpinComplete);
   const onPlaySoundRef = useRef(onPlaySound);
 
@@ -104,21 +107,19 @@ export function SlotMachine({
     onPlaySoundRef.current = onPlaySound;
   }, [onSpinComplete, onPlaySound]);
 
-  // Reset when new spin starts
+  // Reset when new spin starts (detect by spin ID change)
   useEffect(() => {
-    if (isSpinning) {
+    if (currentSpin && currentSpin.id !== currentSpinId) {
+      setCurrentSpinId(currentSpin.id);
       setReelsStopped([false, false, false]);
       setShowResult(false);
-      hasCompletedRef.current = false;
       onPlaySoundRef.current('spin');
     }
-  }, [isSpinning]);
+  }, [currentSpin, currentSpinId]);
 
-  // Check if all reels stopped - only fire once
+  // Check if all reels stopped - only fire once per spin
   useEffect(() => {
-    if (reelsStopped.every(Boolean) && currentSpin && !hasCompletedRef.current) {
-      hasCompletedRef.current = true;
-      
+    if (reelsStopped.every(Boolean) && currentSpin && currentSpin.id === currentSpinId && !showResult) {
       const timer = setTimeout(() => {
         setShowResult(true);
         
@@ -165,21 +166,21 @@ export function SlotMachine({
       <div className="reels-container">
         <Reel
           finalSymbol={currentSpin?.reels[0] || null}
-          isSpinning={isSpinning}
+          spinId={currentSpinId}
           delay={0}
           onStop={() => handleReelStop(0)}
           onPlayTick={() => onPlaySoundRef.current('tick')}
         />
         <Reel
           finalSymbol={currentSpin?.reels[1] || null}
-          isSpinning={isSpinning}
+          spinId={currentSpinId}
           delay={300}
           onStop={() => handleReelStop(1)}
           onPlayTick={() => onPlaySoundRef.current('tick')}
         />
         <Reel
           finalSymbol={currentSpin?.reels[2] || null}
-          isSpinning={isSpinning}
+          spinId={currentSpinId}
           delay={600}
           onStop={() => handleReelStop(2)}
           onPlayTick={() => onPlaySoundRef.current('tick')}

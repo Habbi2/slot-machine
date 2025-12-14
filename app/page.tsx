@@ -25,17 +25,16 @@ export default function Home() {
   const leaderboard = useLeaderboard();
   
   // Track if we've already handled this spin result
-  const lastHandledSpinRef = useRef<string | null>(null);
+  const lastHandledSpinRef = useRef<number | null>(null);
 
   // Handle spin result (after animation completes) - with deduplication
   const handleSpinComplete = useCallback(() => {
     const result = slotMachine.currentSpin;
     if (!result) return;
     
-    // Create unique ID for this spin to prevent duplicate handling
-    const spinId = `${result.username}-${result.reels.map(r => r.emoji).join('')}`;
-    if (lastHandledSpinRef.current === spinId) return;
-    lastHandledSpinRef.current = spinId;
+    // Use spin ID to prevent duplicate handling
+    if (lastHandledSpinRef.current === result.id) return;
+    lastHandledSpinRef.current = result.id;
 
     // Mark spin as finished so we can spin again
     slotMachine.finishSpin();

@@ -22,6 +22,7 @@ SYMBOLS.forEach((symbol) => {
 
 export type Symbol = (typeof SYMBOLS)[number];
 export type SpinResult = {
+  id: number; // Unique ID for each spin
   reels: [Symbol, Symbol, Symbol];
   isJackpot: boolean;
   isSmallWin: boolean;
@@ -45,6 +46,7 @@ export function useSlotMachine() {
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const lastSpinTimeRef = useRef(0);
   const cooldownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const spinCounterRef = useRef(0);
 
   // Get random symbol using weighted selection
   const getRandomSymbol = useCallback((): Symbol => {
@@ -85,7 +87,7 @@ export function useSlotMachine() {
         tokens *= BONUS_MULTIPLIER;
       }
 
-      return { reels, isJackpot, isSmallWin, hasBonus, tokens, username, color };
+      return { id: 0, reels, isJackpot, isSmallWin, hasBonus, tokens, username, color };
     },
     [symbolsMatch]
   );
@@ -125,6 +127,9 @@ export function useSlotMachine() {
     (username: string, color: string): SpinResult | null => {
       if (!canSpin()) return null;
 
+      // Increment spin counter for unique ID
+      spinCounterRef.current += 1;
+
       setIsSpinning(true);
 
       // Generate random reels
@@ -135,7 +140,7 @@ export function useSlotMachine() {
       ];
 
       const result = calculateResult(reels, username, color);
-      setCurrentSpin(result);
+      setCurrentSpin({ ...result, id: spinCounterRef.current });
 
       // Start cooldown
       startCooldown();
