@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { SlotMachine } from './components/SlotMachine';
-import { Leaderboard } from './components/Leaderboard';
 import { useSlotMachine } from './hooks/useSlotMachine';
 import { useLeaderboard } from './hooks/useLeaderboard';
 import { useArcadeSounds } from './hooks/useArcadeSounds';
@@ -13,7 +12,6 @@ import { fireJackpot, fireSmallWin, fireCoin } from './lib/confetti';
 const TWITCH_CHANNEL = 'Habbi3';
 
 export default function Home() {
-  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isTestMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return new URLSearchParams(window.location.search).get('test') === 'true';
@@ -25,23 +23,30 @@ export default function Home() {
   const { play, isMuted, toggleMute } = useArcadeSounds();
   const slotMachine = useSlotMachine();
   const leaderboard = useLeaderboard();
+  
+  // Track if we've already handled this spin result
+  const lastHandledSpinRef = useRef<string | null>(null);
 
-  // Handle spin result (after animation completes)
+  // Handle spin result (after animation completes) - with deduplication
   const handleSpinComplete = useCallback(() => {
     const result = slotMachine.currentSpin;
     if (!result) return;
+    
+    // Create unique ID for this spin to prevent duplicate handling
+    const spinId = `${result.username}-${result.reels.map(r => r.emoji).join('')}-${Date.now()}`;
+    if (lastHandledSpinRef.current === spinId) return;
+    lastHandledSpinRef.current = spinId;
 
     // Record in leaderboard
     leaderboard.recordSpin(result.username, result.tokens, result.isJackpot);
 
-    // Fire confetti based on result
+    // Fire confetti based on result - only once!
     if (result.isJackpot) {
       fireJackpot();
     } else if (result.isSmallWin) {
       fireSmallWin();
-    } else {
-      fireCoin();
     }
+    // No confetti for losing - less visual noise
   }, [slotMachine.currentSpin, leaderboard]);
 
   // Handle commands from Twitch chat
@@ -61,12 +66,6 @@ export default function Home() {
           }
           break;
 
-        case 'leaderboard':
-        case 'lb':
-        case 'top':
-          setIsLeaderboardOpen((prev) => !prev);
-          break;
-
         case 'resetslots':
           if (isBroadcaster) {
             leaderboard.reset();
@@ -78,7 +77,7 @@ export default function Home() {
     [slotMachine, leaderboard]
   );
 
-  // Connect to Twitch (disabled in test mode to avoid interference)
+  // Connect to Twitch
   useTwitchCommands({
     channel: isTestMode ? '' : TWITCH_CHANNEL,
     onCommand: isTestMode ? undefined : handleCommand,
@@ -113,7 +112,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Slot Machine Widget */}
+      {/* Slot Machine Widget with integrated leaderboard */}
       <SlotMachine
         currentSpin={slotMachine.currentSpin}
         isSpinning={slotMachine.isSpinning}
@@ -123,14 +122,7 @@ export default function Home() {
         onToggleMute={toggleMute}
         onSpinComplete={handleSpinComplete}
         onPlaySound={play}
-      />
-
-      {/* Leaderboard Widget */}
-      <Leaderboard
-        isOpen={isLeaderboardOpen}
-        onToggle={() => setIsLeaderboardOpen((prev) => !prev)}
-        topPlayers={leaderboard.getTopPlayers(5)}
-        totalStats={leaderboard.getTotalStats()}
+        topPlayers={leaderboard.getTopPlayers(3)}
       />
     </main>
   );

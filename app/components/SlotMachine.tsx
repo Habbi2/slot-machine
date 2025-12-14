@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { SpinResult, Symbol } from '../hooks/useSlotMachine';
+import type { PlayerStats } from '../hooks/useLeaderboard';
 
 // All possible symbols for spinning animation
 const ALL_SYMBOLS = ['🍒', '🍋', '🔔', '7️⃣', '⭐', '💎'];
@@ -16,6 +17,7 @@ interface SlotMachineProps {
   onToggleMute: () => void;
   onSpinComplete: () => void;
   onPlaySound: (sound: 'spin' | 'tick' | 'smallWin' | 'jackpot' | 'coin') => void;
+  topPlayers: PlayerStats[];
 }
 
 interface ReelProps {
@@ -32,7 +34,6 @@ function Reel({ finalSymbol, isSpinning, delay, onStop, onPlayTick }: ReelProps)
   const onStopRef = useRef(onStop);
   const onPlayTickRef = useRef(onPlayTick);
   
-  // Keep refs updated
   useEffect(() => {
     onStopRef.current = onStop;
     onPlayTickRef.current = onPlayTick;
@@ -43,7 +44,6 @@ function Reel({ finalSymbol, isSpinning, delay, onStop, onPlayTick }: ReelProps)
     
     setSpinning(true);
     
-    // Spin animation - rapid symbol changes
     const spinDuration = 1500 + delay;
     const intervalTime = 80;
     let elapsed = 0;
@@ -51,11 +51,9 @@ function Reel({ finalSymbol, isSpinning, delay, onStop, onPlayTick }: ReelProps)
     const interval = setInterval(() => {
       elapsed += intervalTime;
       
-      // Random symbol during spin
       const randomIndex = Math.floor(Math.random() * ALL_SYMBOLS.length);
       setDisplaySymbol(ALL_SYMBOLS[randomIndex]);
 
-      // Stop when duration reached
       if (elapsed >= spinDuration) {
         clearInterval(interval);
         if (finalSymbol) {
@@ -92,49 +90,60 @@ export function SlotMachine({
   onToggleMute,
   onSpinComplete,
   onPlaySound,
+  topPlayers,
 }: SlotMachineProps) {
   const [reelsStopped, setReelsStopped] = useState([false, false, false]);
   const [showResult, setShowResult] = useState(false);
+  const hasCompletedRef = useRef(false);
+  const onSpinCompleteRef = useRef(onSpinComplete);
+  const onPlaySoundRef = useRef(onPlaySound);
 
-  // Reset reels when new spin starts
+  // Keep refs updated
+  useEffect(() => {
+    onSpinCompleteRef.current = onSpinComplete;
+    onPlaySoundRef.current = onPlaySound;
+  }, [onSpinComplete, onPlaySound]);
+
+  // Reset when new spin starts
   useEffect(() => {
     if (isSpinning) {
       setReelsStopped([false, false, false]);
       setShowResult(false);
-      onPlaySound('spin');
+      hasCompletedRef.current = false;
+      onPlaySoundRef.current('spin');
     }
-  }, [isSpinning, onPlaySound]);
+  }, [isSpinning]);
 
-  // Check if all reels stopped
+  // Check if all reels stopped - only fire once
   useEffect(() => {
-    if (reelsStopped.every(Boolean) && currentSpin) {
-      // Small delay before showing result
+    if (reelsStopped.every(Boolean) && currentSpin && !hasCompletedRef.current) {
+      hasCompletedRef.current = true;
+      
       const timer = setTimeout(() => {
         setShowResult(true);
         
-        // Play appropriate sound
         if (currentSpin.isJackpot) {
-          onPlaySound('jackpot');
+          onPlaySoundRef.current('jackpot');
         } else if (currentSpin.isSmallWin) {
-          onPlaySound('smallWin');
+          onPlaySoundRef.current('smallWin');
         } else {
-          onPlaySound('coin');
+          onPlaySoundRef.current('coin');
         }
         
-        onSpinComplete();
+        onSpinCompleteRef.current();
       }, 300);
 
       return () => clearTimeout(timer);
     }
-  }, [reelsStopped, currentSpin, onSpinComplete, onPlaySound]);
+  }, [reelsStopped, currentSpin]);
 
-  const handleReelStop = useCallback((index: number) => {
+  const handleReelStop = (index: number) => {
     setReelsStopped((prev) => {
       const next = [...prev];
       next[index] = true;
       return next;
     });
-  }, []);
+  };
 
   const cooldownPercent = cooldownTotal > 0 ? (cooldownRemaining / cooldownTotal) * 100 : 0;
 
@@ -159,21 +168,21 @@ export function SlotMachine({
           isSpinning={isSpinning}
           delay={0}
           onStop={() => handleReelStop(0)}
-          onPlayTick={() => onPlaySound('tick')}
+          onPlayTick={() => onPlaySoundRef.current('tick')}
         />
         <Reel
           finalSymbol={currentSpin?.reels[1] || null}
           isSpinning={isSpinning}
           delay={300}
           onStop={() => handleReelStop(1)}
-          onPlayTick={() => onPlaySound('tick')}
+          onPlayTick={() => onPlaySoundRef.current('tick')}
         />
         <Reel
           finalSymbol={currentSpin?.reels[2] || null}
           isSpinning={isSpinning}
           delay={600}
           onStop={() => handleReelStop(2)}
-          onPlayTick={() => onPlaySound('tick')}
+          onPlayTick={() => onPlaySoundRef.current('tick')}
         />
       </div>
 
@@ -222,9 +231,31 @@ export function SlotMachine({
         </div>
       </div>
 
+      {/* Integrated Leaderboard */}
+      <div className="integrated-leaderboard">
+        <div className="lb-header">🏆 TOP PLAYERS</div>
+        {topPlayers.length === 0 ? (
+          <div className="lb-empty">No spins yet!</div>
+        ) : (
+          <div className="lb-rows">
+            {topPlayers.slice(0, 3).map((player, index) => (
+              <div key={player.username} className="lb-row">
+                <span className="lb-rank">
+                  {index === 0 && '🥇'}
+                  {index === 1 && '🥈'}
+                  {index === 2 && '🥉'}
+                </span>
+                <span className="lb-name">{player.username}</span>
+                <span className="lb-tokens">{player.tokens}🪙</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Instructions */}
       <div className="instructions">
-        <span>!spin</span> to play • <span>!leaderboard</span> for scores
+        Type <span>!spin</span> to play
       </div>
     </div>
   );
