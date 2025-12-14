@@ -1,0 +1,385 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+@import "tailwindcss";
+
+:root {
+  --arcade-red: #FF0000;
+  --arcade-yellow: #FFFF00;
+  --arcade-green: #00FF00;
+  --arcade-cyan: #00FFFF;
+  --arcade-magenta: #FF00FF;
+  --arcade-orange: #FF6600;
+  --arcade-purple: #BF00FF;
+  --arcade-pink: #FFB8FF;
+  --neon-green: #39FF14;
+  --arcade-gold: #FFD700;
+}
+
+/* Transparent background for OBS */
+html, body {
+  background: transparent !important;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Pixel font classes */
+.pixel-text {
+  font-family: 'Press Start 2P', monospace;
+  image-rendering: pixelated;
+  -webkit-font-smoothing: none;
+}
+
+.terminal-text {
+  font-family: 'VT323', monospace;
+}
+
+/* Slot Machine Cabinet */
+.slot-machine {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 320px;
+  background: linear-gradient(180deg, #2a1a4a 0%, #1a0a2e 100%);
+  border: 4px solid var(--arcade-gold);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 
+    0 0 20px rgba(255, 215, 0, 0.3),
+    inset 0 2px 0 rgba(255, 255, 255, 0.1);
+  font-family: 'Press Start 2P', monospace;
+}
+
+.cabinet-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--arcade-gold);
+}
+
+.cabinet-title {
+  font-size: 12px;
+  color: var(--arcade-gold);
+  text-shadow: 0 0 10px var(--arcade-gold);
+  animation: titleGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+  from { text-shadow: 0 0 10px var(--arcade-gold); }
+  to { text-shadow: 0 0 20px var(--arcade-gold), 0 0 30px var(--arcade-orange); }
+}
+
+.mute-button {
+  background: transparent;
+  border: 2px solid var(--arcade-cyan);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.mute-button:hover {
+  background: rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 10px var(--arcade-cyan);
+}
+
+/* Reels Container */
+.reels-container {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 8px;
+  background: #000;
+  border: 3px solid #444;
+  border-radius: 8px;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+.reel-container {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+  border: 2px solid var(--arcade-gold);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.reel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Result Display */
+.result-display {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.spinner-name {
+  font-size: 10px;
+  margin-bottom: 4px;
+  text-shadow: 0 0 5px currentColor;
+}
+
+.result-text {
+  font-size: 11px;
+  margin-bottom: 6px;
+  padding: 4px;
+}
+
+.result-text.jackpot {
+  color: var(--arcade-gold);
+  animation: jackpotFlash 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes jackpotFlash {
+  from { 
+    color: var(--arcade-gold);
+    text-shadow: 0 0 10px var(--arcade-gold);
+  }
+  to { 
+    color: var(--arcade-orange);
+    text-shadow: 0 0 20px var(--arcade-orange), 0 0 40px var(--arcade-red);
+  }
+}
+
+.result-text.small-win {
+  color: var(--neon-green);
+  text-shadow: 0 0 10px var(--neon-green);
+}
+
+.result-text.lose {
+  color: #888;
+}
+
+.tokens-earned {
+  font-size: 14px;
+  color: var(--arcade-gold);
+  text-shadow: 0 0 5px var(--arcade-gold);
+}
+
+.bonus-text {
+  color: var(--arcade-magenta);
+  font-size: 8px;
+}
+
+/* Cooldown Bar */
+.cooldown-container {
+  margin-top: 12px;
+}
+
+.cooldown-bar {
+  height: 8px;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cooldown-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--arcade-red), var(--arcade-orange));
+  border-radius: 4px;
+}
+
+.cooldown-text {
+  font-size: 8px;
+  color: #888;
+  text-align: center;
+  margin-top: 4px;
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+}
+
+/* Instructions */
+.instructions {
+  margin-top: 8px;
+  font-size: 8px;
+  color: #666;
+  text-align: center;
+  font-family: 'VT323', monospace;
+  font-size: 12px;
+}
+
+.instructions span {
+  color: var(--arcade-cyan);
+}
+
+/* Leaderboard */
+.leaderboard-container {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 280px;
+  font-family: 'Press Start 2P', monospace;
+}
+
+.leaderboard-toggle {
+  width: 100%;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, #2a1a4a 0%, #1a0a2e 100%);
+  border: 3px solid var(--arcade-gold);
+  border-radius: 8px;
+  color: var(--arcade-gold);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  text-shadow: 0 0 5px var(--arcade-gold);
+  transition: all 0.2s;
+}
+
+.leaderboard-toggle:hover {
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+.leaderboard-panel {
+  background: linear-gradient(180deg, #2a1a4a 0%, #1a0a2e 100%);
+  border: 3px solid var(--arcade-gold);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+
+.leaderboard-header {
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 2px solid var(--arcade-gold);
+}
+
+.leaderboard-title {
+  font-size: 10px;
+  color: var(--arcade-gold);
+  text-shadow: 0 0 5px var(--arcade-gold);
+}
+
+.leaderboard-list {
+  padding: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.no-players {
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  padding: 16px;
+}
+
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  font-size: 9px;
+}
+
+.leaderboard-row:last-child {
+  border-bottom: none;
+}
+
+.rank {
+  width: 24px;
+  text-align: center;
+}
+
+.player-name {
+  flex: 1;
+  color: var(--arcade-cyan);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-tokens {
+  color: var(--arcade-gold);
+}
+
+.player-jackpots {
+  color: var(--arcade-magenta);
+  font-size: 8px;
+}
+
+.leaderboard-footer {
+  display: flex;
+  justify-content: space-around;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 2px solid var(--arcade-gold);
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 6px;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-size: 10px;
+  color: var(--arcade-cyan);
+}
+
+/* Test Controls */
+.test-controls {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 8px;
+  font-family: 'Press Start 2P', monospace;
+}
+
+.test-btn {
+  padding: 8px 12px;
+  background: var(--arcade-purple);
+  border: 2px solid var(--arcade-magenta);
+  border-radius: 4px;
+  color: white;
+  font-size: 8px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.test-btn:hover {
+  background: var(--arcade-magenta);
+  box-shadow: 0 0 10px var(--arcade-magenta);
+}
+
+.test-btn.reset {
+  background: var(--arcade-red);
+  border-color: #ff6666;
+}
+
+.test-btn.reset:hover {
+  background: #ff3333;
+}
+
+/* Scrollbar styling */
+.leaderboard-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.leaderboard-list::-webkit-scrollbar-track {
+  background: #1a0a2e;
+}
+
+.leaderboard-list::-webkit-scrollbar-thumb {
+  background: var(--arcade-gold);
+  border-radius: 3px;
+}
