@@ -48,7 +48,7 @@ export function useLeaderboard() {
 
   // Add spin result to leaderboard (accepts full SpinResult)
   const recordSpin = useCallback(
-    (result: { username: string; tokens: number; isJackpot: boolean }) => {
+    (result: { username: string; tokens: number; baseTokens: number; multiplier: number; isJackpot: boolean }) => {
       setLeaderboard((prev) => {
         const existing = prev[result.username] || {
           username: result.username,
@@ -58,12 +58,17 @@ export function useLeaderboard() {
           lastPlayed: 0,
         };
 
+        // Always use baseTokens * multiplier for leaderboard
+        const tokensToAdd = (typeof result.baseTokens === 'number' && typeof result.multiplier === 'number')
+          ? result.baseTokens * result.multiplier
+          : result.tokens;
+
         return {
           ...prev,
           [result.username]: {
             ...existing,
             spins: existing.spins + 1,
-            tokens: existing.tokens + result.tokens,
+            tokens: existing.tokens + tokensToAdd,
             jackpots: existing.jackpots + (result.isJackpot ? 1 : 0),
             lastPlayed: Date.now(),
           },
