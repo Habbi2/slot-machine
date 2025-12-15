@@ -31,7 +31,6 @@ export default function Home() {
   const handleSpinComplete = useCallback(() => {
     const result = slotMachine.currentSpin;
     if (!result) return;
-    
     // Use spin ID to prevent duplicate handling
     if (lastHandledSpinRef.current === result.id) return;
     lastHandledSpinRef.current = result.id;
@@ -39,8 +38,8 @@ export default function Home() {
     // Mark spin as finished so we can spin again
     slotMachine.finishSpin();
 
-    // Record in leaderboard
-    leaderboard.recordSpin(result.username, result.tokens, result.isJackpot);
+    // Record in leaderboard (pass full result for consistency)
+    leaderboard.recordSpin(result);
 
     // Fire confetti based on result - only once!
     if (result.isJackpot) {
