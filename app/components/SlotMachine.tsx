@@ -191,7 +191,7 @@ export function SlotMachine({
       <AnimatePresence>
         {showResult && currentSpin && (
           <motion.div
-            className="result-display"
+            className={`result-display ${currentSpin.isMegaJackpot ? 'mega-jackpot' : currentSpin.isSuperJackpot ? 'super-jackpot' : ''}`}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
@@ -203,14 +203,26 @@ export function SlotMachine({
               {currentSpin.username}
             </div>
             <div className={`result-text ${currentSpin.isJackpot ? 'jackpot' : currentSpin.isSmallWin ? 'small-win' : 'lose'}`}>
-              {currentSpin.isJackpot && '🎉 JACKPOT! 🎉'}
-              {currentSpin.isSmallWin && '✨ WIN! ✨'}
-              {!currentSpin.isJackpot && !currentSpin.isSmallWin && '😢 TRY AGAIN'}
+              {currentSpin.winType}
             </div>
             <div className="tokens-earned">
               +{currentSpin.tokens}🪙
-              {currentSpin.hasBonus && <span className="bonus-text"> (2x BONUS!)</span>}
+              {currentSpin.multiplier > 1 && (
+                <motion.span 
+                  className="multiplier-text"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.2, type: 'spring' }}
+                >
+                  {currentSpin.multiplierLabel}
+                </motion.span>
+              )}
             </div>
+            {currentSpin.multiplier > 1 && (
+              <div className="base-tokens">
+                ({currentSpin.baseTokens} × {currentSpin.multiplier})
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

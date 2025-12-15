@@ -168,6 +168,66 @@ html, body {
   text-shadow: 0 0 5px var(--arcade-gold);
 }
 
+.multiplier-text {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, var(--arcade-magenta), var(--arcade-purple));
+  border-radius: 4px;
+  font-size: 10px;
+  animation: multiplierPulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes multiplierPulse {
+  from { 
+    transform: scale(1);
+    box-shadow: 0 0 5px var(--arcade-magenta);
+  }
+  to { 
+    transform: scale(1.1);
+    box-shadow: 0 0 15px var(--arcade-magenta), 0 0 25px var(--arcade-purple);
+  }
+}
+
+.base-tokens {
+  font-size: 8px;
+  color: #888;
+  margin-top: 4px;
+  font-family: 'VT323', monospace;
+  font-size: 12px;
+}
+
+/* Mega/Super Jackpot special effects */
+.result-display.mega-jackpot {
+  background: linear-gradient(135deg, rgba(191, 0, 255, 0.4), rgba(0, 255, 255, 0.4));
+  border: 2px solid var(--arcade-cyan);
+  animation: megaJackpotBg 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes megaJackpotBg {
+  from { 
+    box-shadow: 0 0 20px var(--arcade-cyan), inset 0 0 20px rgba(0, 255, 255, 0.2);
+  }
+  to { 
+    box-shadow: 0 0 40px var(--arcade-magenta), inset 0 0 30px rgba(191, 0, 255, 0.3);
+  }
+}
+
+.result-display.super-jackpot {
+  background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 215, 0, 0.3));
+  border: 2px solid var(--arcade-gold);
+  animation: superJackpotBg 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes superJackpotBg {
+  from { 
+    box-shadow: 0 0 15px var(--arcade-gold), inset 0 0 15px rgba(255, 215, 0, 0.2);
+  }
+  to { 
+    box-shadow: 0 0 30px var(--arcade-red), inset 0 0 25px rgba(255, 0, 0, 0.2);
+  }
+}
+
 .bonus-text {
   color: var(--arcade-magenta);
   font-size: 8px;
