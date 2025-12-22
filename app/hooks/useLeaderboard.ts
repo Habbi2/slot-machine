@@ -1,3 +1,10 @@
+// Persistent top 5 jackpot leaderboard
+const JACKPOT_LEADERBOARD_KEY = 'slot-machine-jackpot-leaderboard';
+
+export interface JackpotRecord {
+  username: string;
+  score: number;
+}
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
@@ -19,6 +26,7 @@ export interface Leaderboard {
 export function useLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<Leaderboard>({});
   const [isLoaded, setIsLoaded] = useState(false);
+  const [jackpotLeaderboard, setJackpotLeaderboard] = useState<JackpotRecord[]>([]);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -28,6 +36,10 @@ export function useLeaderboard() {
         if (saved) {
           setLeaderboard(JSON.parse(saved));
         }
+        const jackpotSaved = localStorage.getItem(JACKPOT_LEADERBOARD_KEY);
+        if (jackpotSaved) {
+          setJackpotLeaderboard(JSON.parse(jackpotSaved));
+        }
       } catch (e) {
         console.error('Failed to load leaderboard:', e);
       }
@@ -35,16 +47,29 @@ export function useLeaderboard() {
     }
   }, []);
 
-  // Save to localStorage whenever leaderboard changes
+  // Save to localStorage whenever leaderboard or jackpot leaderboard changes
   useEffect(() => {
     if (isLoaded && typeof window !== 'undefined') {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(leaderboard));
+        localStorage.setItem(JACKPOT_LEADERBOARD_KEY, JSON.stringify(jackpotLeaderboard));
       } catch (e) {
         console.error('Failed to save leaderboard:', e);
       }
     }
-  }, [leaderboard, isLoaded]);
+  }, [leaderboard, jackpotLeaderboard, isLoaded]);
+
+  // Listen for localStorage changes to jackpot leaderboard (live update)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = (e: StorageEvent) => {
+      if (e.key === JACKPOT_LEADERBOARD_KEY && e.newValue) {
+        setJackpotLeaderboard(JSON.parse(e.newValue));
+      }
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
 
   // Add spin result to leaderboard (accepts full SpinResult)
   const recordSpin = useCallback(
@@ -63,6 +88,16 @@ export function useLeaderboard() {
           ? result.baseTokens * result.multiplier
           : result.tokens;
 
+        // If this is a jackpot, update the jackpot leaderboard
+        if (result.isJackpot) {
+          setJackpotLeaderboard((prevJackpots) => {
+            const newJackpots = [...prevJackpots, { username: result.username, score: tokensToAdd }];
+            // Sort descending, keep top 5
+            newJackpots.sort((a, b) => b.score - a.score);
+            return newJackpots.slice(0, 5);
+          });
+        }
+
         return {
           ...prev,
           [result.username]: {
@@ -77,6 +112,13 @@ export function useLeaderboard() {
     },
     []
   );
+  // Manual reset for jackpot leaderboard
+  const resetJackpotLeaderboard = useCallback(() => {
+    setJackpotLeaderboard([]);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(JACKPOT_LEADERBOARD_KEY, JSON.stringify([]));
+    }
+  }, []);
 
   // Get top players sorted by tokens
   const getTopPlayers = useCallback(
@@ -123,5 +165,7 @@ export function useLeaderboard() {
     getPlayer,
     reset,
     getTotalStats,
+    jackpotLeaderboard,
+    resetJackpotLeaderboard,
   };
 }
