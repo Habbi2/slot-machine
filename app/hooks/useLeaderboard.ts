@@ -1,11 +1,14 @@
 // Persistent top 5 jackpot leaderboard
+// Move 'use client' to the very top
+'use client';
+
+// Persistent top 5 jackpot leaderboard
 const JACKPOT_LEADERBOARD_KEY = 'slot-machine-jackpot-leaderboard';
 
 export interface JackpotRecord {
   username: string;
   score: number;
 }
-'use client';
 
 import { useState, useCallback, useEffect } from 'react';
 
