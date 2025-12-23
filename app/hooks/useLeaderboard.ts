@@ -77,6 +77,19 @@ export function useLeaderboard() {
   // Add spin result to leaderboard (accepts full SpinResult)
   const recordSpin = useCallback(
     (result: { username: string; tokens: number; baseTokens: number; multiplier: number; isJackpot: boolean }) => {
+      // Use result.tokens directly - it already contains baseTokens * multiplier
+      const tokensToAdd = result.tokens;
+
+      // If this is a jackpot, update the jackpot leaderboard
+      if (result.isJackpot) {
+        setJackpotLeaderboard((prevJackpots) => {
+          const newJackpots = [...prevJackpots, { username: result.username, score: tokensToAdd }];
+          // Sort descending, keep top 5
+          newJackpots.sort((a, b) => b.score - a.score);
+          return newJackpots.slice(0, 5);
+        });
+      }
+
       setLeaderboard((prev) => {
         const existing = prev[result.username] || {
           username: result.username,
@@ -85,21 +98,6 @@ export function useLeaderboard() {
           jackpots: 0,
           lastPlayed: 0,
         };
-
-        // Always use baseTokens * multiplier for leaderboard
-        const tokensToAdd = (typeof result.baseTokens === 'number' && typeof result.multiplier === 'number')
-          ? result.baseTokens * result.multiplier
-          : result.tokens;
-
-        // If this is a jackpot, update the jackpot leaderboard
-        if (result.isJackpot) {
-          setJackpotLeaderboard((prevJackpots) => {
-            const newJackpots = [...prevJackpots, { username: result.username, score: tokensToAdd }];
-            // Sort descending, keep top 5
-            newJackpots.sort((a, b) => b.score - a.score);
-            return newJackpots.slice(0, 5);
-          });
-        }
 
         return {
           ...prev,
