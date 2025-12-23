@@ -10,6 +10,9 @@ import { fireJackpot, fireSmallWin, fireCoin } from './lib/confetti';
 
 // Configuration
 const TWITCH_CHANNEL = 'Habbi3';
+// Set this to your channel point reward ID from Twitch dashboard
+// To find it: Create a reward, then check network requests or use Twitch CLI
+const CHANNEL_POINT_REWARD_ID = ''; // Leave empty to disable channel points, or add your reward ID
 
 export default function Home() {
   const [isTestMode] = useState(() => {
@@ -50,7 +53,7 @@ export default function Home() {
     // No confetti for losing - less visual noise
   }, [slotMachine, leaderboard]);
 
-  // Handle commands from Twitch chat
+  // Handle commands from Twitch chat (only for broadcaster/mod commands when using channel points)
   const handleCommand = useCallback(
     ({ command, username, color, isBroadcaster }: { 
       command: string; 
@@ -59,10 +62,12 @@ export default function Home() {
       color: string; 
       isBroadcaster: boolean;
       isMod: boolean;
+      isChannelPointRedemption: boolean;
     }) => {
       switch (command) {
         case 'spin':
-          if (slotMachine.canSpin()) {
+          // Only allow !spin if channel points are disabled (no reward ID set)
+          if (!CHANNEL_POINT_REWARD_ID && slotMachine.canSpin()) {
             slotMachine.spin(username, color);
           }
           break;
@@ -73,15 +78,42 @@ export default function Home() {
             console.log('🎰 Leaderboard reset by broadcaster');
           }
           break;
+
+        case 'resetjackpots':
+          if (isBroadcaster) {
+            leaderboard.resetJackpotLeaderboard();
+            console.log('🎰 Jackpot leaderboard reset by broadcaster');
+          }
+          break;
       }
     },
     [slotMachine, leaderboard]
   );
 
+  // Handle channel point redemptions
+  const handleChannelPointRedemption = useCallback(
+    ({ username, color }: { 
+      command: string; 
+      args: string[];
+      username: string; 
+      color: string; 
+      isBroadcaster: boolean;
+      isMod: boolean;
+      isChannelPointRedemption: boolean;
+    }) => {
+      if (slotMachine.canSpin()) {
+        slotMachine.spin(username, color);
+      }
+    },
+    [slotMachine]
+  );
+
   // Connect to Twitch
   useTwitchCommands({
     channel: isTestMode ? '' : TWITCH_CHANNEL,
+    channelPointRewardId: CHANNEL_POINT_REWARD_ID || undefined,
     onCommand: isTestMode ? undefined : handleCommand,
+    onChannelPointRedemption: isTestMode ? undefined : handleChannelPointRedemption,
   });
 
   // Test mode functions
