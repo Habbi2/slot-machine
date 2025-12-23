@@ -12,7 +12,7 @@ import { fireJackpot, fireSmallWin, fireCoin } from './lib/confetti';
 const TWITCH_CHANNEL = 'Habbi3';
 // Set this to your channel point reward ID from Twitch dashboard
 // To find it: Create a reward, then check network requests or use Twitch CLI
-const CHANNEL_POINT_REWARD_ID = ''; // Leave empty to disable channel points, or add your reward ID
+const CHANNEL_POINT_REWARD_ID = '924420a6-3031-4578-9033-6a808e628b72';
 
 export default function Home() {
   const [isTestMode] = useState(() => {
